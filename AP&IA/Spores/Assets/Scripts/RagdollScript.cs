@@ -8,13 +8,16 @@ public class RagdollScript : MonoBehaviour
     public Transform principalBone;
     private Transform[] tabBones;
     // Start is called before the first frame update
-    void Start()
+    //public RagdollScript(Transform pb) {
+    //    this.principalBone = pb;
+    //}
+    public void bones()
     {
         principalBone = this.transform.GetChild(1).GetChild(0);
         Vector3 initial = new Vector3(1, 1, 1);
         Vector3 destination = new Vector3(1, 1, 1);
         principalBone.gameObject.AddComponent<Rigidbody>();
-        principalBone.GetComponent<Rigidbody>().mass = 100;
+        principalBone.GetComponent<Rigidbody>().mass = 1;
         for(int i = 0; i < principalBone.childCount; ++i)
         {
             tabBones = principalBone.GetChild(i).GetComponentsInChildren<Transform>();
