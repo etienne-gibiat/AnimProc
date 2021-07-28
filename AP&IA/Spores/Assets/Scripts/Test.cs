@@ -1,187 +1,204 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Test : MonoBehaviour
 {
 
-    Rigidbody ailes_Bone;
-    Rigidbody ailesSup_Bone;
-    Rigidbody ailes_Bone2;
-    Rigidbody ailesSup_Bone2;
-    Rigidbody def_Bone;
-    Rigidbody jambesSup_Bone;
-    Rigidbody def_Bone1;
 
-    Rigidbody jambesSup_Bone2;
-    Rigidbody bras_Bone;
-    Rigidbody bras_Bone1;
 
-    Rigidbody[] rs;
-    NeuralNetwork net;
 
     float[][][][] tabChromosome;
     int[] layers = { 30, 25, 25, 30 };
 
     float[] notes;
 
-    public Random random = new Random();
 
-    public Vector3 force;
+    [SerializeField]
+    Transform spawn;
+    [SerializeField]
+    Transform end;
+    [SerializeField]
+    GameObject papy;
+
+    GameObject[] pop;
+    int n_pop;
+
+    System.Random random = new System.Random();
+
 
     // Start is called before the first frame update
-    void Start()
-    {
-        //RagdollScript r = new RagdollScript(transform.Find("z_Armature"));
+    void Start() {
+        StartCoroutine(genetic_algorithm(20, 50, (float)0.3, (float)0.1));
 
-        this.GetComponent<RagdollScript>().bones();
-
-        ailes_Bone = transform.Find("z_Armature/Bone/Ailes-Bone").GetComponent<Rigidbody>();
-        ailesSup_Bone = transform.Find("z_Armature/Bone/Ailes-Bone/AilesSup-Bone").GetComponent<Rigidbody>();
-        ailes_Bone2 = transform.Find("z_Armature/Bone/Ailes-Bone2").GetComponent<Rigidbody>();
-        ailesSup_Bone2 = transform.Find("z_Armature/Bone/Ailes-Bone2/AilesSup2-Bone").GetComponent<Rigidbody>();
-        def_Bone = transform.Find("z_Armature/Bone/Def-Bone").GetComponent<Rigidbody>();
-        jambesSup_Bone = transform.Find("z_Armature/Bone/Def-Bone/JambesSup-Bone").GetComponent<Rigidbody>();
-        def_Bone1 = transform.Find("z_Armature/Bone/Def-Bone1").GetComponent<Rigidbody>();
-        jambesSup_Bone2 = transform.Find("z_Armature/Bone/Def-Bone1/JambesSup-Bone2").GetComponent<Rigidbody>();
-        bras_Bone = transform.Find("z_Armature/Bone/Bras-Bone").GetComponent<Rigidbody>();
-        bras_Bone1 = transform.Find("z_Armature/Bone/Bras-Bone1").GetComponent<Rigidbody>();
-
-        rs = new Rigidbody[10];
-        rs[0] = ailes_Bone;
-        rs[1] = ailesSup_Bone;
-        rs[2] = ailes_Bone2;
-        rs[3] = ailesSup_Bone2;
-        rs[4] = def_Bone;
-        rs[5] = jambesSup_Bone;
-        rs[6] = def_Bone1;
-        rs[7] = jambesSup_Bone2;
-        rs[8] = bras_Bone;
-        rs[9] = bras_Bone1;
-
-        force = new Vector3(0, 0, 0);
-
-        net = new NeuralNetwork(layers);
     }
 
     // Update is called once per frame
-    void Update()
-    {
-
-        float[] t = new float[30];
-
-        for (int i = 0; i < rs.Length; i++) {
-            t[i * 3] = rs[i].velocity.x;
-            t[i * 3 + 1] = rs[i].velocity.y;
-            t[i * 3 + 2] = rs[i].velocity.z;
-        }
-
-        float[] res = net.FeedForward(t);
-
-        for (int i = 0; i < rs.Length; i++) {
-            rs[i].AddForce(new Vector3(res[i * 3] * 80 , res[i * 3 + 1] * 80, res[i * 3 + 2] * 80));
-        }
+    void Update() {
 
 
     }
 
-    public void genetic_algorithm(int n_bits, int n_iter, int n_pop, float r_cross, float r_mut) {
+    IEnumerator genetic_algorithm(int n_iter, int n_pop, float r_cross, float r_mut) {
         chromosomeAleatoire(n_pop);
         notes = new float[n_pop];
-        float best_eval = 0;
+        float best_eval = 10;
         float[][][] best = tabChromosome[0];
+        pop = new GameObject[n_pop];
+
         //# enumerate generations
         for (int i = 0; i < n_iter; i++) {
-            //# evaluate all candidates in the population
-            UnityEngine.Debug.Log(i + " best " + best);  
-                for (int j = 0; j < n_pop; j++) {
-                    
-                notes.append(nbBitJambes * 10 + nbBitAiles * 10 + nbBitBras * 10);
-                }
 
-                //# check for new best solution   
-                for (int j = 0; j < n_pop; j++) {
-                    if (notes[i] > best_eval){
-                        best = tabChromosome[i];
-                        best_eval = notes[i];
-                        print(">%d, new best f(%s) = %.3f" % (gen, pop[i], int(notes[i]));
+            for (int j = 0; j < n_pop; j++) {
+                GameObject clone = Instantiate(papy, spawn.position, Quaternion.identity);
+                clone.GetComponent<PapyScript>().initNeural(tabChromosome[j]);
+                pop[j] = clone;
+            }
+
+            yield return new WaitForSeconds(15);
+            UnityEngine.Debug.Log("stop sim");
+
+
+
+            //# evaluate all candidates in the population
+            UnityEngine.Debug.Log(i + " best " + best_eval);
+            for (int j = 0; j < n_pop; j++) {
+                float distDebutFin = Vector3.Distance(spawn.position, end.position);
+                float distToEnd = Vector3.Distance(pop[j].GetComponent<RagdollScript>().principalBone.transform.position, end.position);
+                float note = 10 * (distToEnd / distDebutFin);
+                notes[j] = note;
+            }
+
+            //# check for new best solution   
+            for (int j = 0; j < n_pop; j++) {
+                if (notes[j] < best_eval) {
+                    best = tabChromosome[j];
+                    best_eval = notes[j];
+                    UnityEngine.Debug.Log(j + " new best " + best_eval);
+                }
+            }
+
+
+            //# select parents
+            float[][][][] selected = new float[n_pop][][][];
+            for (int j = 0; j < n_pop; j++) {
+                selected[j] = selection(n_pop, notes);
+            }
+
+            for (int j = n_pop; j < 0; j--) {
+                for (int k = 0; k < j - 1; k++) {
+                    float[][][] temp;
+                    float noteTemp;
+                    if (notes[j] > notes[j + 1]) {
+
+                        temp = tabChromosome[j];
+                        noteTemp = notes[j];
+
+                        tabChromosome[j] = tabChromosome[j + 1];
+                        notes[j] = notes[j + 1];
+
+                        tabChromosome[j + 1] = temp;
+                        notes[j + 1] = noteTemp;
                     }
                 }
             }
 
-            //# select parents    
-            selected = [selection(pop, notes) for _ in range(n_pop);
-
-            bests = [bests for _, bests in sorted(zip(notes, pop))];
-
-
-            keep = bests[-6:];
+            float[][][][] keep = new float[n_pop][][][];
+            for (int j = 0; j < n_pop - 10; j++) {
+                keep[j] = tabChromosome[j];
+            }
 
             //# create the next generation
-            children = [];
-
-            for i in range(0, n_pop, 2) {
+            float[][][][] children = new float[n_pop][][][];
+            float[][][] p1, p2;
+            for (int j = 0; j < n_pop; j += 2) {
 
                 //# get selected parents in pairs
-                p1, p2 = selected[i], selected[i + 1];
+                p1 = selected[i];
+                p2 = selected[i + 1];
 
                 //# crossover and mutation
-                for c in crossover(p1, p2, r_cross) {
+                float[][][][] c = crossover(p1, p2, r_cross);
+                for (int k = 0; k < 2; k++) {
 
                     //# mutation
-                    mutation(c, r_mut);
+                    mutation(c[k], r_mut);
 
                     //# store for next generation
-                    children.append(c);
+                    children[j + k] = c[k];
                 }
             }
 
             //replace population
-            pop = children;
+            for (int j = 0; j < n_pop; j++) {
+                Destroy(pop[j]);
+            }
+            tabChromosome = children;
         }
+   
         //pop = children[0:19]
         //pop.append(keep)
         //print(pop)
-        return [pop, best, best_eval];
-}
+    }
 
 
 //# tournament selection
-    public void selection(pop, scores, k= 3) {
+    public float[][][] selection(int n_pop, float[] scores, int k= 3) {
         //first random selection
-        selection_ix = randint(0, len(pop) - 1)
-        for ix in range(0, len(pop), k - 1) {
+
+        int selection_ix = random.Next(0, n_pop - 1);
+        for (int ix = 0; ix < n_pop - 1; ix += k) {
             //check if better (e.g. perform a tournament)
-            if scores[ix] > scores[selection_ix]
+            if (scores[ix] > scores[selection_ix])
                 selection_ix = ix;
         }
-        return pop[selection_ix];
+        return tabChromosome[selection_ix];
     }
 
 
     //# crossover two parents to create two children
-    public void crossover(p1, p2, r_cross) {
+    public float[][][][] crossover(float[][][] p1, float[][][] p2, float r_cross) {
         //# children are copies of parents by default
-        c1, c2 = p1.copy(), p2.copy();
+        float[][][] c1 = new float[p1.Length][][];
+        float[][][] c2 = new float[p2.Length][][];
+        p1.CopyTo(c1, 0);
+        p2.CopyTo(c2, 0);
         //# check for recombination
-        if randint(0, 1) < r_cross{
-            //# select crossover point that is not on the end of the string
-            pt = randint(1, len(p1) - 2);
-            //# perform crossover
-            c1 = p1[:pt] + p2[pt:];
-            c2 = p2[:pt] + p1[pt:];
+        for (int j = 0; j < p1.Length - 1; j++) {
+            for (int k = 0; k < p1[j].Length; k++) {
+                for (int n = 0; n < p1[j][k].Length; n++) {
+                    float r = (float)random.NextDouble();
+                    if (r < r_cross) {
+                        c1[j][k][n] = p1[j][k][n];
+                        c2[j][k][n] = p2[j][k][n];
+                    }
+                    else {
+                        c1[j][k][n] = p2[j][k][n];
+                        c2[j][k][n] = p1[j][k][n];
+                    }
+                }
+            }
         }
-        return [c1, c2];
+        float[][][][] res = { c1, c2 };
+
+        return res;
     }
 
     //# mutation operator
-    public void mutation(bitstring, r_mut) {
-        for i in range(len(bitstring)) {
-            //check for a mutation
-            if (uniform(0, 1) < r_mut) {
-                //flip the bit
-                bitstring[i] = 1 - bitstring[i];
+    public void mutation(float[][][] bitstring, float r_mut) {
+
+        for (int j = 0; j < bitstring.Length - 1; j++) {
+            for (int k = 0; k < bitstring[j].Length; k++) {
+                for (int n = 0; n < bitstring[j][k].Length; n++) {
+                    float r = (float)random.NextDouble();
+                    //check for a mutation
+                    if (r < r_mut) {
+                        bitstring[j][k][n] = (float)random.NextDouble();
+                    }
+                }
             }
+            
         }
     }
 
@@ -197,7 +214,7 @@ public class Test : MonoBehaviour
                 for(int k = 0; k < layers[j]; k++) {
                     tabChromosome[i][j][k] = new float[layers[j + 1]];
                     for (int n = 0; n < layers[j + 1]; n++) {
-                        tabChromosome[i][j][k][n] = (float)random.NextDouble() - 0.5f; ;
+                        tabChromosome[i][j][k][n] = (float)random.NextDouble() - 0.5f;
 
                     }
                 }

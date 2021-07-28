@@ -29,6 +29,22 @@ public class NeuralNetwork
         }
     }
 
+    public void setWeights(float[][][] weights) {
+        for (int i = 0; i < layers.Length; i++) {
+            layers[i].setWeights(weights[i]);
+        }
+    }
+
+    public float[][][] getWeights() {
+        float[][][] res = new float[layers.Length][][];
+        for (int i = 0; i < layers.Length; i++) {
+            res[i] = layers[i].getWeights();
+        }
+        return res;
+    }
+
+
+
     /// <summary>
     /// High level feedforward for this network
     /// </summary>
@@ -124,6 +140,25 @@ public class NeuralNetwork
                     weights[i, j] = (float)random.NextDouble() - 0.5f;
                 }
             }
+        }
+
+        public void setWeights(float[][] weights) {
+            for (int i = 0; i < numberOfOuputs; i++) {
+                for (int j = 0; j < numberOfInputs; j++) {
+                    this.weights[i, j] = weights[j][i];
+                }
+            }
+        }
+
+        public float[][] getWeights() {
+            float[][] res = new float[numberOfOuputs][];
+            for (int i = 0; i < numberOfOuputs; i++) {
+                res[i] = new float[numberOfInputs];
+                for (int j = 0; j < numberOfInputs; j++) {
+                    res[j][i] = weights[i, j]; 
+                }
+            }
+            return res;
         }
 
         /// <summary>

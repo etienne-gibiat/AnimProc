@@ -18,7 +18,8 @@ public class RagdollScript : MonoBehaviour
         Vector3 destination = new Vector3(1, 1, 1);
         principalBone.gameObject.AddComponent<Rigidbody>();
         principalBone.GetComponent<Rigidbody>().mass = 1;
-        for(int i = 0; i < principalBone.childCount; ++i)
+        //principalBone.GetComponent<Rigidbody>().useGravity = false;
+        for (int i = 0; i < principalBone.childCount; ++i)
         {
             tabBones = principalBone.GetChild(i).GetComponentsInChildren<Transform>();
             for (int j = 0; j < tabBones.Length - 1; ++j)
