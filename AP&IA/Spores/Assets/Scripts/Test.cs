@@ -30,7 +30,7 @@ public class Test : MonoBehaviour
 
     // Start is called before the first frame update
     void Start() {
-        StartCoroutine(genetic_algorithm(20, 50, (float)0.3, (float)0.1));
+        StartCoroutine(genetic_algorithm(5, 20, (float)0.3, (float)0.1));
 
     }
 
@@ -43,10 +43,9 @@ public class Test : MonoBehaviour
     IEnumerator genetic_algorithm(int n_iter, int n_pop, float r_cross, float r_mut) {
         chromosomeAleatoire(n_pop);
         notes = new float[n_pop];
-        float best_eval = 10;
         float[][][] best = tabChromosome[0];
         pop = new GameObject[n_pop];
-
+        float best_eval = 10;
         //# enumerate generations
         for (int i = 0; i < n_iter; i++) {
 
@@ -60,7 +59,7 @@ public class Test : MonoBehaviour
             UnityEngine.Debug.Log("stop sim");
 
 
-
+            
             //# evaluate all candidates in the population
             UnityEngine.Debug.Log(i + " best " + best_eval);
             for (int j = 0; j < n_pop; j++) {
@@ -70,6 +69,7 @@ public class Test : MonoBehaviour
                 notes[j] = note;
             }
 
+            best_eval = 10;
             //# check for new best solution   
             for (int j = 0; j < n_pop; j++) {
                 if (notes[j] < best_eval) {
@@ -105,14 +105,14 @@ public class Test : MonoBehaviour
             }
 
             float[][][][] keep = new float[n_pop][][][];
-            for (int j = 0; j < n_pop - 10; j++) {
-                keep[j] = tabChromosome[j];
+            for (int j = n_pop; j > n_pop - 10; j--) {
+                keep[n_pop - j] = tabChromosome[j - 1];
             }
 
             //# create the next generation
             float[][][][] children = new float[n_pop][][][];
             float[][][] p1, p2;
-            for (int j = 0; j < n_pop; j += 2) {
+            for (int j = 0; j < n_pop - 10; j += 2) {
 
                 //# get selected parents in pairs
                 p1 = selected[i];
@@ -130,11 +130,17 @@ public class Test : MonoBehaviour
                 }
             }
 
+            
+
             //replace population
             for (int j = 0; j < n_pop; j++) {
                 Destroy(pop[j]);
             }
             tabChromosome = children;
+
+            for (int j = 0; j < 10; j++) {
+                tabChromosome[n_pop - 10 + j] = keep[j];
+            }
         }
    
         //pop = children[0:19]
